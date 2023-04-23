@@ -21,6 +21,9 @@ return new class extends Migration
       $table->string('bio')->nullable();
       $table->string('image')->nullable();;
 
+      $table->unsignedBigInteger('theme_id');
+      $table->foreign('theme_id')->references('id')->on('themes')->onDelete('cascade');
+
       $table->rememberToken();
       $table->timestamps();
     });

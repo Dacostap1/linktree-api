@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Services\FileService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 
@@ -15,21 +16,13 @@ class UserController extends Controller
   public function index()
   {
     try {
-      return response()->json([new UserResource(auth()->user())], 200);
-    } catch (\Throwable $e) {
+      return response()->json(new UserResource(auth()->user()), 200);
+    } catch (\Exception $e) {
       return response()->json(['error' => $e->getMessage()], 400);
     }
   }
 
 
-
-  /**
-   * Store a newly created resource in storage.
-   */
-  public function store(Request $request)
-  {
-    //
-  }
 
   /**
    * Display the specified resource.
@@ -52,20 +45,51 @@ class UserController extends Controller
 
     try {
       $user->name = $request->name;
-      $user->name = $request->bio;
+      $user->bio = $request->bio;
       $user->save();
 
-      return response()->json([new UserResource($user)], 200);
-    } catch (\Throwable $e) {
+      return response()->json(new UserResource($user), 200);
+    } catch (\Exception $e) {
+      return response()->json(['error' => $e->getMessage()], 400);
+    }
+  }
+
+  public function updateTheme(Request $request)
+  {
+    $request->validate([
+      'theme_id' => 'required',
+    ]);
+
+    try {
+      $user = User::findOrFail(auth()->user()->id);
+      $user->theme_id = $request->theme_id;
+      $user->save();
+
+      return response()->json(new UserResource($user), 200);
+    } catch (\Exception $e) {
       return response()->json(['error' => $e->getMessage()], 400);
     }
   }
 
   /**
-   * Remove the specified resource from storage.
+   * Save the specified image in storage.
    */
-  public function destroy(string $id)
+  public function uploadImage(Request $request)
   {
-    //
+    $request->validate([
+      'image' => 'required|mimes:png,jpg,jpeg',
+    ]);
+
+    try {
+
+      $service = new FileService();
+      $user = $service->updateImage(auth()->user(), $request);
+      $user->save();
+
+
+      return response()->json(new UserResource($user), 200);
+    } catch (\Exception $e) {
+      return response()->json(['error' => $e->getMessage()], 400);
+    }
   }
 }
